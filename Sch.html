@@ -1,0 +1,932 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>School Management Portal — Single File (Rebuilt)</title>
+
+  <!-- Material Symbols (icons) -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+
+  <style>
+    :root{
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #0b1220;
+      --muted: #6b7280;
+      --accent: linear-gradient(90deg,#4f46e5,#06b6d4);
+      --shadow: 0 8px 30px rgba(2,6,23,0.06);
+      --glass: rgba(255,255,255,0.6);
+    }
+    [data-theme="dark"]{
+      --bg:#071025;
+      --card:#0f1724;
+      --text:#e6eefc;
+      --muted:#9aa4bf;
+      --accent: linear-gradient(90deg,#7c3aed,#06b6d4);
+      --shadow: 0 12px 36px rgba(2,6,23,0.7);
+      --glass: rgba(255,255,255,0.03);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+    .ms{font-family:"Material Symbols Outlined";font-size:18px;vertical-align:middle;margin-right:8px}
+
+    /* ---------- LOGIN ---------- */
+    #login-screen{display:grid;place-items:center;min-height:100vh;padding:20px}
+    .login-wrap{width:100%;max-width:980px;display:grid;grid-template-columns:1fr 420px;border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+    .brand{
+      padding:36px;
+      background:linear-gradient(135deg,#0ea5e9,#7c3aed);
+      color:white; display:flex;flex-direction:column;gap:12px;justify-content:center;
+    }
+    .brand h1{margin:0;font-size:26px}
+    .brand p{margin:0;opacity:0.9}
+    .login-panel{padding:28px;background:var(--card)}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    input[type="text"], input[type="email"], input[type="password"], select{width:100%;padding:10px;border-radius:8px;border:1px solid #e6eefc;background:transparent;outline:none}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;border:0;background:linear-gradient(90deg,#4f46e5,#06b6d4);color:white;cursor:pointer}
+    .link{color:#4f46e5;cursor:pointer;font-size:13px}
+
+    /* ---------- APP LAYOUT ---------- */
+    #app{display:none;min-height:100vh}
+    .topbar{height:64px;display:flex;align-items:center;justify-content:space-between;padding:10px 16px;position:sticky;top:0;z-index:30;background:linear-gradient(90deg,rgba(255,255,255,0.4),transparent);box-shadow:var(--shadow)}
+    .searchbox{flex:1;display:flex;align-items:center;gap:8px;padding:8px;border-radius:10px;background:var(--card);margin:0 12px}
+    .layout{display:flex;gap:16px;padding:18px}
+    .sidebar{width:260px;background:var(--card);padding:12px;border-radius:12px;height:calc(100vh - 120px);overflow:auto;transition:width .18s}
+    .sidebar.collapsed{width:72px}
+    .nav-item{display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;color:var(--muted);cursor:pointer}
+    .nav-item:hover{background:linear-gradient(90deg,rgba(0,0,0,0.03),transparent)}
+    .main{flex:1;min-height:calc(100vh - 120px)}
+    .card{background:var(--card);padding:14px;border-radius:12px;box-shadow:var(--shadow);margin-bottom:12px}
+
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    thead th{font-weight:700;color:var(--muted);padding:10px 8px;border-bottom:1px solid rgba(0,0,0,0.06)}
+    td, th{padding:8px 10px}
+    tbody tr:hover{background:linear-gradient(90deg,rgba(0,0,0,0.02),transparent)}
+
+    dialog{border-radius:10px;border:0;padding:0}
+    .muted{color:var(--muted)}
+    .small{font-size:13px}
+    .pill{padding:8px 10px;border-radius:999px;background:var(--glass);border:0;cursor:pointer}
+
+    /* Responsive */
+    @media (max-width:900px){
+      .login-wrap{grid-template-columns:1fr}
+      .layout{padding:12px;flex-direction:column}
+      .sidebar{width:100%;height:auto;order:2}
+      .main{order:1}
+    }
+
+    /* Report (for PDF) */
+    .report-page{width:800px;padding:20px;background:white;color:#111;border-radius:8px}
+    .report-header{display:flex;justify-content:space-between;align-items:center}
+    .report-table{width:100%;border-collapse:collapse;margin-top:12px}
+    .report-table th, .report-table td{border:1px solid #ddd;padding:8px}
+
+    @media print{ .no-print{display:none} }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN SCREEN -->
+  <main id="login-screen" aria-label="Login Screen">
+    <div class="login-wrap" role="application">
+      <section class="brand" aria-hidden="false">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:64px;height:64px;border-radius:12px;background:rgba(255,255,255,0.12);display:grid;place-items:center;font-weight:700">LOGO</div>
+          <div>
+            <h1>Sunrise Academy</h1>
+            <div class="small muted">School Management Portal — Rebuilt</div>
+          </div>
+        </div>
+        <p>Professional single-file system. Login as Admin or Teacher. Demo data is preloaded.</p>
+        <div style="margin-top:auto;font-size:13px">Tip: admin@demo / admin (or teacher@demo / teacher)</div>
+      </section>
+
+      <section class="login-panel" aria-labelledby="login-heading">
+        <h2 id="login-heading">Sign in</h2>
+        <div style="margin-top:12px">
+          <label for="login-email">Email</label>
+          <input id="login-email" type="email" placeholder="you@school.test" autocomplete="username" />
+        </div>
+        <div style="margin-top:10px">
+          <label for="login-password">Password</label>
+          <input id="login-password" type="password" placeholder="password" autocomplete="current-password" />
+        </div>
+        <div style="margin-top:10px">
+          <label for="login-role">Role</label>
+          <select id="login-role"><option value="admin">Admin</option><option value="teacher">Teacher</option></select>
+        </div>
+
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+          <button class="btn" id="btn-login"><span class="ms">login</span> Login</button>
+          <div style="margin-left:auto" class="muted small"> <span class="link" id="open-create">Create account</span></div>
+        </div>
+
+        <div class="muted small" style="margin-top:10px">All data stored locally (localStorage). Use the Reset in Settings to restore demo data.</div>
+
+        <dialog id="create-account">
+          <form method="dialog" style="padding:16px;min-width:320px">
+            <h3>Create Account (Demo)</h3>
+            <div><label>Name</label><input id="ca-name" type="text" /></div>
+            <div><label>Email</label><input id="ca-email" type="email" /></div>
+            <div><label>Password</label><input id="ca-password" type="password" /></div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+              <button id="ca-save" class="btn">Create</button>
+              <button type="button" onclick="document.getElementById('create-account').close()" class="pill">Cancel</button>
+            </div>
+          </form>
+        </dialog>
+      </section>
+    </div>
+  </main>
+
+  <!-- APP -->
+  <div id="app" data-theme="light" aria-label="Main Application">
+    <div class="topbar no-print">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="pill" id="menu-toggle" title="Toggle sidebar">☰</button>
+        <div class="searchbox" role="search"><span class="ms">search</span><input id="global-q" placeholder="Search students, classes, announcements..." style="border:0;outline:none;flex:1;background:transparent" /></div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="small muted" id="user-info">Guest</div>
+        <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(90deg,#fff,rgba(255,255,255,0.06));display:grid;place-items:center" id="user-avatar">G</div>
+        <button id="theme-toggle" class="pill" title="Toggle Theme">🌙</button>
+        <button id="logout" class="pill">Logout</button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" id="sidebar" aria-label="Sidebar navigation">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div class="muted small">Menu</div>
+          <div><button id="sidebar-compact" class="pill small">⇔</button></div>
+        </div>
+
+        <nav role="navigation" aria-label="Main">
+          <div class="nav-item" data-route="dashboard"><span class="ms">dashboard</span><span>Dashboard</span></div>
+          <div class="nav-item" data-route="students"><span class="ms">groups</span><span>Students</span></div>
+          <div class="nav-item" data-route="classes"><span class="ms">class</span><span>Classes</span></div>
+          <div class="nav-item" data-route="teacher"><span class="ms">book</span><span>Teacher (Scores)</span></div>
+          <div class="nav-item" data-route="attendance"><span class="ms">event_available</span><span>Attendance</span></div>
+          <div class="nav-item" data-route="announcements"><span class="ms">campaign</span><span>Announcements</span></div>
+          <div class="nav-item" data-route="profile"><span class="ms">person</span><span>Profile</span></div>
+          <div class="nav-item" data-route="settings"><span class="ms">settings</span><span>Settings</span></div>
+        </nav>
+      </aside>
+
+      <main class="main" id="main-content" aria-live="polite">
+        <section id="view"></section>
+      </main>
+    </div>
+  </div>
+
+  <!-- TEMPLATES -->
+  <template id="tpl-dashboard">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><h2>Welcome to Sunrise Academy</h2><div class="muted small">Admin console</div></div>
+        <div class="muted small" id="now-date"></div>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap">
+        <div class="card" style="min-width:180px;flex:1">
+          <div class="muted small">Students</div>
+          <h3 id="stat-students">0</h3>
+        </div>
+        <div class="card" style="min-width:180px;flex:1">
+          <div class="muted small">Classes</div>
+          <h3 id="stat-classes">0</h3>
+        </div>
+        <div class="card" style="min-width:180px;flex:1">
+          <div class="muted small">Announcements</div>
+          <h3 id="stat-ann">0</h3>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-students">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h2>Students</h2>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="student-search" placeholder="Search by name, id, class" />
+          <button class="btn" id="add-student"><span class="ms">person_add</span>Add</button>
+          <button class="pill" id="imp-csv">Import CSV</button>
+          <button class="pill" id="exp-csv">Export CSV</button>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;overflow:auto">
+        <table role="table">
+          <thead><tr><th>ID</th><th>Full Name</th><th>Gender</th><th>Class</th><th>Age</th><th>Action</th></tr></thead>
+          <tbody id="students-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <dialog id="student-modal">
+      <form method="dialog" style="padding:16px;min-width:360px">
+        <h3 id="student-modal-title">Add Student</h3>
+        <div><label>Full name</label><input id="st-name" /></div>
+        <div><label>Gender</label><select id="st-gender"><option>Male</option><option>Female</option><option>Other</option></select></div>
+        <div><label>Class</label><select id="st-class"></select></div>
+        <div><label>Age</label><input id="st-age" type="number" min="3" max="25" /></div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+          <button id="save-st" class="btn">Save</button>
+          <button type="button" class="pill" onclick="document.getElementById('student-modal').close()">Cancel</button>
+        </div>
+      </form>
+    </dialog>
+  </template>
+
+  <template id="tpl-classes">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h2>Classes</h2>
+        <div><button class="btn" id="add-class">New Class</button></div>
+      </div>
+
+      <div style="margin-top:12px">
+        <table><thead><tr><th>Class</th><th>Teacher</th><th>Students</th><th>Action</th></tr></thead><tbody id="classes-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <dialog id="class-modal">
+      <form method="dialog" style="padding:16px;min-width:320px">
+        <h3 id="class-modal-title">Create Class</h3>
+        <div><label>Class name</label><input id="c-name" /></div>
+        <div><label>Teacher</label><input id="c-teacher" /></div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+          <button id="save-class" class="btn">Save</button>
+          <button type="button" class="pill" onclick="document.getElementById('class-modal').close()">Cancel</button>
+        </div>
+      </form>
+    </dialog>
+  </template>
+
+  <template id="tpl-teacher">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h2>Teacher — Progress Report</h2>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="rep-student"></select>
+          <select id="rep-term"><option>1st Term</option><option>2nd Term</option><option>3rd Term</option></select>
+          <button class="btn" id="download-pdf"><span class="ms">download</span>Download PDF</button>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;overflow:auto">
+        <table id="report-table" class="report-table">
+          <thead><tr><th>Subject</th><th>1st CA</th><th>HW/Proj</th><th>2nd CA</th><th>Exam</th><th>Total</th><th>Grade</th><th>Remark</th></tr></thead>
+          <tbody id="report-tbody"></tbody>
+        </table>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+          <div class="muted small">Teacher: <span id="report-teacher"></span></div>
+          <div class="muted small">Overall Total: <span id="report-total">0</span></div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-attendance">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h2>Attendance</h2>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="att-student"></select>
+          <input id="att-date" type="date" />
+          <select id="att-status"><option>Present</option><option>Absent</option><option>Late</option></select>
+          <button class="btn" id="save-att">Record</button>
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <table><thead><tr><th>Date</th><th>Student</th><th>Class</th><th>Status</th><th>Action</th></tr></thead><tbody id="att-tbody"></tbody></table>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-announcements">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h2>Announcements</h2>
+        <div><button class="btn" id="add-ann">New</button></div>
+      </div>
+
+      <div style="margin-top:12px">
+        <table><thead><tr><th>Title</th><th>Date</th><th>Posted By</th><th>Action</th></tr></thead><tbody id="ann-tbody"></tbody></table>
+      </div>
+
+      <dialog id="ann-modal">
+        <form method="dialog" style="padding:16px;min-width:360px">
+          <h3>New Announcement</h3>
+          <div><label>Title</label><input id="ann-title" /></div>
+          <div><label>Message</label><textarea id="ann-msg" rows="5"></textarea></div>
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+            <button id="save-ann" class="btn">Save</button>
+            <button type="button" class="pill" onclick="document.getElementById('ann-modal').close()">Cancel</button>
+          </div>
+        </form>
+      </dialog>
+    </div>
+  </template>
+
+  <template id="tpl-profile">
+    <div class="card">
+      <h2>Profile</h2>
+      <div style="display:flex;gap:12px;align-items:center;margin-top:12px">
+        <div style="width:96px;height:96px;border-radius:12px;background:linear-gradient(90deg,#e6eefc,#fff);display:grid;place-items:center" id="profile-avatar">AV</div>
+        <div>
+          <div id="profile-name" style="font-size:18px;font-weight:600"></div>
+          <div class="muted small" id="profile-role"></div>
+          <div style="margin-top:8px"><button class="btn" id="edit-profile">Edit</button></div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-settings">
+    <div class="card">
+      <h2>Settings</h2>
+      <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:12px">
+        <div style="min-width:220px">
+          <div class="muted small">Sidebar collapsed</div>
+          <label class="pill" style="display:inline-block;margin-top:8px"><input id="set-collapse" type="checkbox" /> Compact sidebar</label>
+        </div>
+        <div style="min-width:220px">
+          <div class="muted small">Reset demo data</div>
+          <button class="pill" id="reset-data">Reset</button>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- Libraries for PDF (small external scripts via CDN) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <script>
+  (function(){
+    'use strict';
+    // ---------- helpers ----------
+    const $ = s => document.querySelector(s);
+    const $$ = s => Array.from(document.querySelectorAll(s));
+    const uid = (p='id') => p + '-' + Math.random().toString(36).slice(2,9);
+    const LS = { students: 'sm_students_v2', classes:'sm_classes_v2', attendance:'sm_att_v2', announcements:'sm_ann_v2', settings:'sm_set_v2', session:'sm_sess_v2', users:'sm_users_v2', scores:'sm_scores_v2' };
+
+    function save(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+    function load(key, fallback){ const v = localStorage.getItem(key); if(!v) return fallback; try{return JSON.parse(v);}catch(e){return fallback;} }
+
+    // ---------- default demo data ----------
+    function makeDemo(){
+      const classes = [
+        {id:'Primary 1', teacher:'Mrs. Adebayo'},
+        {id:'Primary 2', teacher:'Mr. Okoro'},
+        {id:'Primary 3', teacher:'Ms. Ade'},
+        {id:'JSS 1', teacher:'Mrs. John'},
+        {id:'SSS 1', teacher:'Mr. Ali'}
+      ];
+      const names = ["Tomi Ade","Rasheed Bello","Aisha Musa","Samuel John","Grace Peter","Michael Okoye","Fatima Umar","Ifeanyi Kanu","Ngozi Nwosu","Lilian Eze","Musa Abubakar","Chinedu Obi","Ada Eke","Sadiq Yusuf","Hauwa Ibrahim","Emeka Onu","Zainab Sule","Kelvin Frank","Bintu Diallo","Ola Adeyemi"];
+      const students = names.map((n,i)=>({ id: 'S' + (1000+i), name:n, gender: (i%2? 'Female':'Male'), class: classes[i%classes.length].id, age: 8 + (i%8) }));
+      const users = [
+        {id:uid('u'), name:'Admin User', email:'admin@demo', password:'admin', role:'admin'},
+        {id:uid('u'), name:'Teacher User', email:'teacher@demo', password:'teacher', role:'teacher'}
+      ];
+      const attendance = [
+        {id:uid('att'), date:(new Date()).toISOString().slice(0,10), student:students[0].id, status:'Present'},
+        {id:uid('att'), date:(new Date()).toISOString().slice(0,10), student:students[1].id, status:'Absent'}
+      ];
+      const announcements = [{id:uid('ann'), title:'Welcome Back!', date:(new Date()).toISOString().slice(0,10), by:'Admin', message:'Welcome to the new term.'}];
+      const scores = {};
+      students.forEach(s=>{
+        scores[s.id] = { '1st Term': [
+          {subject:'Mathematics', ca1:10, hw:9, ca2:10, exam:60},
+          {subject:'English', ca1:9, hw:8, ca2:10, exam:55},
+          {subject:'Science', ca1:8, hw:8, ca2:9, exam:50}
+        ], '2nd Term': [], '3rd Term': [] };
+      });
+
+      save(LS.classes, classes);
+      save(LS.students, students);
+      save(LS.users, users);
+      save(LS.attendance, attendance);
+      save(LS.announcements, announcements);
+      save(LS.scores, scores);
+      save(LS.settings, {theme:'light', collapsed:false});
+    }
+
+    function ensureDemo(){
+      if(!load(LS.students)) makeDemo();
+      if(!load(LS.settings)) save(LS.settings, {theme:'light', collapsed:false});
+    }
+
+    // ---------- sessions ----------
+    function getSession(){ return load(LS.session, null); }
+    function setSession(s){ save(LS.session, s); }
+
+    // ---------- routing ----------
+    const views = {
+      dashboard(){ renderTpl('tpl-dashboard'); dashboardRender(); },
+      students(){ renderTpl('tpl-students'); studentsRender(); },
+      classes(){ renderTpl('tpl-classes'); classesRender(); },
+      teacher(){ renderTpl('tpl-teacher'); teacherRender(); },
+      attendance(){ renderTpl('tpl-attendance'); attendanceRender(); },
+      announcements(){ renderTpl('tpl-announcements'); announcementsRender(); },
+      profile(){ renderTpl('tpl-profile'); profileRender(); },
+      settings(){ renderTpl('tpl-settings'); settingsRender(); }
+    };
+
+    function renderTpl(id){
+      const tpl = document.getElementById(id);
+      const view = $('#view');
+      view.innerHTML = '';
+      view.appendChild(tpl.content.cloneNode(true));
+      // update date in header if present
+      const d = new Date();
+      if($('#now-date')) $('#now-date').textContent = d.toLocaleString();
+    }
+
+    function route(){
+      const route = (location.hash || '#dashboard').replace('#','').split('?')[0];
+      if(views[route]) views[route]();
+      else views.dashboard();
+    }
+
+    // ---------- UI Init ----------
+    function initUI(){
+      ensureDemo();
+      const session = getSession();
+      if(session && session.email){
+        showApp();
+      } else {
+        showLogin();
+      }
+
+      // login handlers
+      $('#btn-login').addEventListener('click', ()=>{
+        try{
+          const email = $('#login-email').value.trim();
+          const pass = $('#login-password').value;
+          const role = $('#login-role').value;
+          const users = load(LS.users, []);
+          let user = users.find(u => u.email === email && u.password === pass && u.role === role);
+          if(!user){
+            // allow quick-login with demo credentials
+            if(email === 'admin@demo' && pass === 'admin' && role === 'admin') user = users.find(u=>u.role==='admin');
+            if(email === 'teacher@demo' && pass === 'teacher' && role === 'teacher') user = users.find(u=>u.role==='teacher');
+          }
+          if(!user){
+            alert('Invalid credentials (demo). Try admin@demo / admin or teacher@demo / teacher');
+            return;
+          }
+          setSession({id:user.id, name:user.name, email:user.email, role:user.role});
+          showApp();
+          location.hash = '#dashboard';
+        }catch(e){ console.error(e); alert('Login error'); }
+      });
+
+      $('#open-create').addEventListener('click', ()=> document.getElementById('create-account').showModal());
+      $('#ca-save').addEventListener('click', (ev)=>{
+        ev.preventDefault();
+        const name = $('#ca-name').value || 'New User';
+        const email = $('#ca-email').value || ('user'+Date.now()+'@demo');
+        const pass = $('#ca-password').value || 'password';
+        const users = load(LS.users, []); users.push({id:uid('u'), name, email, password:pass, role:'admin'}); save(LS.users, users);
+        alert('Account created (demo). You can now login with that email & password.');
+        document.getElementById('create-account').close();
+      });
+
+      // sidebar nav
+      $$('#sidebar .nav-item').forEach(el=>{
+        el.addEventListener('click', ()=> { location.hash = '#'+el.dataset.route; });
+      });
+      window.addEventListener('hashchange', route);
+
+      // theme
+      $('#theme-toggle').addEventListener('click', ()=>{
+        const app = $('#app'); const cur = app.getAttribute('data-theme') || 'light'; const next = cur==='light'?'dark':'light';
+        app.setAttribute('data-theme', next);
+        const s = load(LS.settings, {}); s.theme = next; save(LS.settings, s);
+      });
+
+      // logout
+      $('#logout').addEventListener('click', ()=>{
+        localStorage.removeItem(LS.session); location.reload();
+      });
+
+      // sidebar toggle
+      $('#menu-toggle').addEventListener('click', ()=> $('#sidebar').classList.toggle('collapsed'));
+      $('#sidebar-compact').addEventListener('click', ()=> $('#sidebar').classList.toggle('collapsed'));
+
+      // global search: route-aware
+      $('#global-q').addEventListener('input', (e)=>{
+        const q = e.target.value.trim().toLowerCase();
+        if(location.hash.includes('students')) { const inp = $('#student-search'); if(inp) { inp.value = q; inp.dispatchEvent(new Event('input')); } }
+      });
+    }
+
+    function showLogin(){ $('#login-screen').style.display = 'grid'; $('#app').style.display = 'none'; }
+    function showApp(){
+      $('#login-screen').style.display = 'none';
+      $('#app').style.display = 'block';
+      // fill topbar user
+      const s = getSession();
+      $('#user-info').textContent = (s?.name || s?.email || 'Guest') + ' • ' + (s?.role || 'Guest');
+      $('#user-avatar').textContent = (s?.name || 'G').slice(0,1).toUpperCase();
+      // apply settings
+      const sett = load(LS.settings, {}); $('#app').setAttribute('data-theme', sett.theme || 'light');
+      if(sett.collapsed) $('#sidebar').classList.add('collapsed'); else $('#sidebar').classList.remove('collapsed');
+      route();
+    }
+
+    // ---------- Dashboard ----------
+    function dashboardRender(){
+      const students = load(LS.students, []);
+      const classes = load(LS.classes, []);
+      const ann = load(LS.announcements, []);
+      $('#stat-students').textContent = students.length;
+      $('#stat-classes').textContent = classes.length;
+      $('#stat-ann').textContent = ann.length;
+    }
+
+    // ---------- Students ----------
+    function studentsRender(){
+      const students = load(LS.students, []);
+      const classes = load(LS.classes, []);
+      const tbody = $('#students-tbody');
+      function fill(list){
+        tbody.innerHTML = '';
+        list.forEach(s=>{
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${s.id}</td><td>${escapeHtml(s.name)}</td><td>${s.gender}</td><td>${s.class}</td><td>${s.age}</td>
+            <td>
+              <button class="pill view" data-id="${s.id}">View</button>
+              <button class="pill edit" data-id="${s.id}">Edit</button>
+              <button class="pill del" data-id="${s.id}">Delete</button>
+            </td>`;
+          tbody.appendChild(tr);
+        });
+        tbody.querySelectorAll('.edit').forEach(b=> b.addEventListener('click', e=> openEdit(e.currentTarget.dataset.id)));
+        tbody.querySelectorAll('.del').forEach(b=> b.addEventListener('click', e=> delStudent(e.currentTarget.dataset.id)));
+        tbody.querySelectorAll('.view').forEach(b=> b.addEventListener('click', e=> viewStudent(e.currentTarget.dataset.id)));
+      }
+      fill(students);
+
+      // populate class options
+      $('#st-class').innerHTML = (classes.map(c=>`<option>${c.id}</option>`)).join('');
+
+      $('#add-student').onclick = ()=> {
+        $('#student-modal-title').textContent='Add Student';
+        $('#st-name').value=''; $('#st-gender').value='Male'; $('#st-age').value=10; $('#st-class').value = classes[0]?.id || '';
+        document.getElementById('student-modal').showModal();
+        $('#save-st').onclick = (ev)=> { ev.preventDefault(); saveNew(); };
+      };
+
+      $('#student-search').addEventListener('input', (e)=> {
+        const q = e.target.value.trim().toLowerCase();
+        const all = load(LS.students, []);
+        const filtered = all.filter(s => s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q) || s.class.toLowerCase().includes(q));
+        fill(filtered);
+      });
+
+      function saveNew(){
+        try{
+          const s = { id: 'S' + (1000 + Math.floor(Math.random()*9000)), name: $('#st-name').value || 'Unnamed', gender: $('#st-gender').value, class: $('#st-class').value || 'Unassigned', age: Number($('#st-age').value) || 10 };
+          const arr = load(LS.students, []); arr.push(s); save(LS.students, arr);
+          document.getElementById('student-modal').close(); studentsRender();
+        }catch(e){ console.error(e); alert('Save error'); }
+      }
+
+      function openEdit(id){
+        const arr = load(LS.students, []); const s = arr.find(x=>x.id===id); if(!s) return;
+        $('#student-modal-title').textContent='Edit Student';
+        $('#st-name').value = s.name; $('#st-gender').value = s.gender; $('#st-age').value = s.age; $('#st-class').value = s.class;
+        document.getElementById('student-modal').showModal();
+        $('#save-st').onclick = (ev)=> { ev.preventDefault(); s.name = $('#st-name').value; s.gender = $('#st-gender').value; s.age = Number($('#st-age').value); s.class = $('#st-class').value; save(LS.students, arr); document.getElementById('student-modal').close(); studentsRender(); };
+      }
+
+      function delStudent(id){
+        if(!confirm('Delete student?')) return;
+        const arr = load(LS.students, []).filter(s=>s.id!==id); save(LS.students, arr); studentsRender();
+      }
+
+      function viewStudent(id){
+        const s = load(LS.students, []).find(x=>x.id===id);
+        alert(`${s.name} — ${s.id}\\nClass: ${s.class}\\nAge: ${s.age}\\nGender: ${s.gender}`);
+      }
+
+      // CSV export
+      $('#exp-csv').addEventListener('click', ()=>{
+        const arr = load(LS.students, []);
+        const rows = [['ID','Name','Gender','Class','Age'], ...arr.map(s=>[s.id,s.name,s.gender,s.class,s.age])];
+        const csv = rows.map(r=> r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\\n');
+        const blob = new Blob([csv], {type:'text/csv'}); const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href=url; a.download='students.csv'; a.click(); URL.revokeObjectURL(url);
+      });
+
+      // CSV import
+      $('#imp-csv').addEventListener('click', ()=>{
+        const inp = document.createElement('input'); inp.type='file'; inp.accept='.csv,text/csv';
+        inp.onchange = e=> {
+          const f = e.target.files[0]; if(!f) return;
+          const r = new FileReader();
+          r.onload = ()=> {
+            const txt = r.result; const lines = txt.split(/\\r?\\n/).map(l=>l.trim()).filter(Boolean);
+            if(lines.length < 2) { alert('CSV empty'); return; }
+            const rows = lines.map(l=> l.match(/(".*?"|[^,]+)(?=,|$)/g).map(x=>x.replace(/^"|"$/g,'')));
+            const headers = rows.shift().map(h=>h.toLowerCase());
+            const data = rows.map(rw=>{
+              const obj={};
+              rw.forEach((c,i)=> obj[headers[i]] = c);
+              return { id: obj.id || ('S'+Math.floor(Math.random()*90000)), name: obj.name || '', gender: obj.gender || 'Male', class: obj.class || 'Unassigned', age: Number(obj.age)||10 };
+            });
+            const arr = load(LS.students, []); save(LS.students, arr.concat(data)); alert('Imported '+data.length+' students'); studentsRender();
+          };
+          r.readAsText(f);
+        };
+        inp.click();
+      });
+    }
+
+    // ---------- Classes ----------
+    function classesRender(){
+      const classes = load(LS.classes, []);
+      const students = load(LS.students, []);
+      const tbody = $('#classes-tbody');
+      tbody.innerHTML = '';
+      classes.forEach(c=>{
+        const count = students.filter(s=>s.class===c.id).length;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${c.id}</td><td>${c.teacher}</td><td>${count}</td>
+          <td>
+            <button class="pill edit" data-id="${c.id}">Edit</button>
+            <button class="pill del" data-id="${c.id}">Delete</button>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+
+      $('#add-class').onclick = ()=> {
+        $('#c-name').value=''; $('#c-teacher').value=''; document.getElementById('class-modal').showModal();
+        $('#save-class').onclick = (ev)=> { ev.preventDefault(); const arr = load(LS.classes, []); arr.push({id: $('#c-name').value||'New Class', teacher: $('#c-teacher').value||'TBD'}); save(LS.classes, arr); document.getElementById('class-modal').close(); classesRender(); };
+      };
+
+      tbody.querySelectorAll('.edit').forEach(b=> b.addEventListener('click', e=>{
+        const id = e.currentTarget.dataset.id; const arr = load(LS.classes, []); const item = arr.find(x=>x.id===id);
+        if(!item) return;
+        $('#c-name').value = item.id; $('#c-teacher').value = item.teacher; document.getElementById('class-modal').showModal();
+        $('#save-class').onclick = (ev)=> { ev.preventDefault(); item.id = $('#c-name').value; item.teacher = $('#c-teacher').value; save(LS.classes, arr); document.getElementById('class-modal').close(); classesRender(); };
+      }));
+
+      tbody.querySelectorAll('.del').forEach(b=> b.addEventListener('click', e=>{
+        if(!confirm('Delete class?')) return;
+        const id = e.currentTarget.dataset.id; let arr = load(LS.classes, []); arr = arr.filter(x=>x.id!==id); save(LS.classes, arr); classesRender();
+      }));
+    }
+
+    // ---------- Teacher (Scores & PDF) ----------
+    async function teacherRender(){
+      const students = load(LS.students, []);
+      const scores = load(LS.scores, {});
+      const repStudent = $('#rep-student'); const repTerm = $('#rep-term'); const tbody = $('#report-tbody');
+      const teacherName = getSession()?.name || 'Teacher';
+      $('#report-teacher').textContent = teacherName;
+      repStudent.innerHTML = students.map(s=>`<option value="${s.id}">${s.name} (${s.id})</option>`).join('');
+      if(!students.length) return;
+
+      function ensureStudentScore(sid){
+        const sc = load(LS.scores, {}); if(!sc[sid]) sc[sid] = {'1st Term':[], '2nd Term':[], '3rd Term':[]};
+        ['1st Term','2nd Term','3rd Term'].forEach(t=>{ while((sc[sid][t]||[]).length < 6) sc[sid][t].push({subject:'Subject '+((sc[sid][t]||[]).length+1), ca1:0, hw:0, ca2:0, exam:0}); });
+        save(LS.scores, sc); return sc;
+      }
+
+      function calcGrade(total){
+        if(total >= 70) return 'A';
+        if(total >= 60) return 'B';
+        if(total >= 50) return 'C';
+        if(total >= 45) return 'D';
+        if(total >= 40) return 'E'; return 'F';
+      }
+      function remark(g){ return g==='A'?'Excellent':g==='B'?'Very Good':g==='C'?'Good':g==='D'?'Fair':g==='E'?'Pass':'Fail'; }
+
+      function render(){
+        const sid = repStudent.value; const term = repTerm.value;
+        ensureStudentScore(sid);
+        const sc = load(LS.scores, {})[sid][term];
+        tbody.innerHTML = '';
+        sc.forEach((r,idx)=>{
+          const tot = Number(r.ca1||0)+Number(r.hw||0)+Number(r.ca2||0)+Number(r.exam||0);
+          const g = calcGrade(tot);
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td><input data-idx="${idx}" data-field="subject" value="${escapeHtml(r.subject)}" /></td>
+            <td><input data-idx="${idx}" data-field="ca1" value="${r.ca1||0}" /></td>
+            <td><input data-idx="${idx}" data-field="hw" value="${r.hw||0}" /></td>
+            <td><input data-idx="${idx}" data-field="ca2" value="${r.ca2||0}" /></td>
+            <td><input data-idx="${idx}" data-field="exam" value="${r.exam||0}" /></td>
+            <td class="muted" id="tot-${idx}">${tot}</td>
+            <td id="grade-${idx}">${g}</td>
+            <td id="rem-${idx}">${remark(g)}</td>`;
+          tbody.appendChild(tr);
+        });
+
+        // bind inputs
+        tbody.querySelectorAll('input').forEach(inp=>{
+          inp.addEventListener('input', (ev)=>{
+            const idx = inp.dataset.idx; const f = inp.dataset.field; const sid = repStudent.value; const term = repTerm.value;
+            const sc0 = load(LS.scores, {}); const row = sc0[sid][term][idx];
+            row[f] = isNaN(Number(inp.value))? inp.value : Number(inp.value);
+            save(LS.scores, sc0);
+            const tot = Number(row.ca1||0)+Number(row.hw||0)+Number(row.ca2||0)+Number(row.exam||0);
+            document.getElementById('tot-'+idx).textContent = tot;
+            const g = calcGrade(tot);
+            document.getElementById('grade-'+idx).textContent = g;
+            document.getElementById('rem-'+idx).textContent = remark(g);
+            updateOverall();
+          });
+        });
+        updateOverall();
+      }
+
+      function updateOverall(){
+        const sid = repStudent.value; const term = repTerm.value; const rows = load(LS.scores, {})[sid][term];
+        const total = rows.reduce((s,r)=> s + Number(r.ca1||0) + Number(r.hw||0) + Number(r.ca2||0) + Number(r.exam||0), 0);
+        $('#report-total').textContent = total;
+      }
+
+      repStudent.addEventListener('change', render);
+      repTerm.addEventListener('change', render);
+      if(repStudent.value) render();
+
+      // PDF download: using html2canvas -> jsPDF
+      $('#download-pdf').addEventListener('click', async ()=>{
+        try{
+          const sid = repStudent.value; const term = repTerm.value;
+          const student = load(LS.students, []).find(s=>s.id===sid);
+          // Build printable HTML in memory
+          const sc = load(LS.scores, {})[sid][term];
+          const school = 'Sunrise Academy';
+          const html = document.createElement('div');
+          html.className = 'report-page';
+          html.style.padding = '18px';
+          html.innerHTML = `
+            <div class="report-header">
+              <div>
+                <h2 style="margin:0">${school}</h2>
+                <div style="margin-top:6px">${term} - Progress Report</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-weight:700">${escapeHtml(student.name)}</div>
+                <div class="muted">${student.class} • ${student.id}</div>
+              </div>
+            </div>
+            <table class="report-table" style="width:100%;border-collapse:collapse;margin-top:12px">
+              <thead><tr><th>Subject</th><th>1st CA</th><th>HW</th><th>2nd CA</th><th>Exam</th><th>Total</th><th>Grade</th><th>Remark</th></tr></thead>
+              <tbody>
+                ${sc.map(r=>{
+                  const tot = Number(r.ca1||0)+Number(r.hw||0)+Number(r.ca2||0)+Number(r.exam||0);
+                  const g = calcGrade(tot); const rm = remark(g);
+                  return `<tr><td>${escapeHtml(r.subject)}</td><td>${r.ca1||0}</td><td>${r.hw||0}</td><td>${r.ca2||0}</td><td>${r.exam||0}</td><td>${tot}</td><td>${g}</td><td>${rm}</td></tr>`;
+                }).join('')}
+              </tbody>
+            </table>
+            <div style="display:flex;justify-content:space-between;margin-top:40px">
+              <div style="text-align:center">Class Teacher<br><br>__________________</div>
+              <div style="text-align:center">Principal<br><br>__________________</div>
+            </div>
+          `;
+
+          // append hidden to body, render with html2canvas
+          html.style.position='fixed'; html.style.left='50%'; html.style.top='50%'; html.style.transform='translate(-50%,-50%)'; html.style.zIndex='9999';
+          html.style.background='white';
+          document.body.appendChild(html);
+
+          // Use html2canvas
+          const canvas = await html2canvas(html, {scale:2, useCORS:true, backgroundColor:'#ffffff'});
+          const imgData = canvas.toDataURL('image/jpeg', 1.0);
+          document.body.removeChild(html);
+
+          // create PDF
+          const { jsPDF } = window.jspdf;
+          const pdf = new jsPDF('p', 'pt', 'a4');
+          const pageWidth = pdf.internal.pageSize.getWidth();
+          const pageHeight = pdf.internal.pageSize.getHeight();
+          // calculate image size to fit A4 while preserving ratio
+          const imgProps = { width: canvas.width, height: canvas.height };
+          const ratio = Math.min(pageWidth / imgProps.width, pageHeight / imgProps.height);
+          const imgWidth = imgProps.width * ratio;
+          const imgHeight = imgProps.height * ratio;
+          pdf.addImage(imgData, 'JPEG', (pageWidth - imgWidth)/2, 30, imgWidth, imgHeight);
+          const filename = `${student.name.replace(/\\s+/g,'_')}_${term.replace(/\\s+/g,'_')}.pdf`;
+          pdf.save(filename);
+        }catch(err){ console.error(err); alert('PDF generation failed'); }
+      });
+    }
+
+    // ---------- Attendance ----------
+    function attendanceRender(){
+      const students = load(LS.students, []);
+      const tbl = $('#att-tbody');
+      function render(){
+        const rows = load(LS.attendance, []);
+        tbl.innerHTML = '';
+        rows.slice().reverse().forEach(r=>{
+          const s = students.find(st=>st.id===r.student);
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${r.date}</td><td>${s?.name||r.student}</td><td>${s?.class||''}</td><td>${r.status}</td>
+            <td><button class="pill del" data-id="${r.id}">Delete</button></td>`;
+          tbl.appendChild(tr);
+        });
+        tbl.querySelectorAll('.del').forEach(b=> b.addEventListener('click', e=>{
+          if(!confirm('Delete record?')) return;
+          const id = e.currentTarget.dataset.id; const rows = load(LS.attendance, []).filter(x=>x.id!==id); save(LS.attendance, rows); render();
+        }));
+      }
+
+      // populate student select
+      $('#att-student').innerHTML = students.map(s=>`<option value="${s.id}">${s.name} (${s.class})</option>`).join('');
+      $('#att-date').value = new Date().toISOString().slice(0,10);
+      $('#save-att').onclick = ()=> {
+        const rec = {id:uid('att'), date: $('#att-date').value, student: $('#att-student').value, status: $('#att-status').value};
+        const arr = load(LS.attendance, []); arr.push(rec); save(LS.attendance, arr); render();
+      };
+
+      render();
+    }
+
+    // ---------- Announcements ----------
+    function announcementsRender(){
+      const tbody = $('#ann-tbody');
+      function render(){
+        const arr = load(LS.announcements, []);
+        tbody.innerHTML = '';
+        arr.slice().reverse().forEach(a=>{
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${escapeHtml(a.title)}</td><td>${a.date}</td><td>${escapeHtml(a.by)}</td>
+            <td>
+              <button class="pill view" data-id="${a.id}">View</button>
+              <button class="pill del" data-id="${a.id}">Delete</button>
+            </td>`;
+          tbody.appendChild(tr);
+        });
+        tbody.querySelectorAll('.view').forEach(b=> b.addEventListener('click', e=>{
+          const id = e.currentTarget.dataset.id; const arr = load(LS.announcements, []); const it = arr.find(x=>x.id===id);
+          alert(`${it.title}\\n\\n${it.message}`);
+        }));
+        tbody.querySelectorAll('.del').forEach(b=> b.addEventListener('click', e=>{
+          if(!confirm('Delete announcement?')) return;
+          const id = e.currentTarget.dataset.id; const arr = load(LS.announcements, []).filter(x=>x.id!==id); save(LS.announcements, arr); render();
+        }));
+      }
+
+      $('#add-ann').onclick = ()=> {
+        document.getElementById('ann-modal').showModal();
+        $('#save-ann').onclick = (ev)=> { ev.preventDefault(); const a = {id:uid('ann'), title: $('#ann-title').value||'Announcement', message: $('#ann-msg').value||'', date: new Date().toISOString().slice(0,10), by: getSession()?.name||'Admin'}; const arr = load(LS.announcements, []); arr.push(a); save(LS.announcements, arr); document.getElementById('ann-modal').close(); announcementsRender(); };
+      };
+
+      render();
+    }
+
+    // ---------- Profile ----------
+    function profileRender(){
+      const s = getSession() || {};
+      $('#profile-name').textContent = s.name || s.email || 'Guest';
+      $('#profile-role').textContent = s.role || 'Guest';
+      $('#edit-profile').onclick = ()=> {
+        const nn = prompt('New display name', s.name || '');
+        if(nn){ s.name = nn; setSession(s); profileRender(); $('#user-info').textContent = (s.name || s.email) + ' • ' + (s.role||'Guest'); $('#user-avatar').textContent = (s.name||'G').slice(0,1).toUpperCase(); }
+      };
+    }
+
+    // ---------- Settings ----------
+    function settingsRender(){
+      const s = load(LS.settings, {});
+      $('#set-collapse').checked = s.collapsed || false;
+      $('#set-collapse').addEventListener('change', (e)=> {
+        s.collapsed = e.target.checked; save(LS.settings, s); if(s.collapsed) $('#sidebar').classList.add('collapsed'); else $('#sidebar').classList.remove('collapsed');
+      });
+      $('#reset-data').addEventListener('click', ()=>{
+        if(!confirm('Reset demo data? This will replace current data.')) return;
+        localStorage.removeItem(LS.students); localStorage.removeItem(LS.classes); localStorage.removeItem(LS.attendance); localStorage.removeItem(LS.announcements); localStorage.removeItem(LS.scores);
+        makeDemo(); alert('Demo data restored.'); location.reload();
+      });
+    }
+
+    // ---------- utility ----------
+    function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+    // ---------- start ----------
+    document.addEventListener('DOMContentLoaded', ()=>{
+      try{
+        initUI();
+      }catch(e){ console.error(e); alert('Initialization error'); }
+    });
+
+  })();
+  </script>
+</body>
+</html>
