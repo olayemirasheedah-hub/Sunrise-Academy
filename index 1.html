@@ -1,0 +1,1462 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>School Management Portal — Single File</title>
+
+<!-- Material Symbols (icons) -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#f4f7fb;
+    --card:#ffffff;
+    --muted:#6b7280;
+    --accent-1: linear-gradient(135deg,#4f46e5 0%,#06b6d4 100%);
+    --glass: rgba(255,255,255,0.6);
+    --shadow: 0 6px 18px rgba(14,30,37,0.08);
+    --radius: 12px;
+    --text:#0f172a;
+    --success: #10b981;
+    --danger:#ef4444;
+    --surface: #f8fafc;
+  }
+  [data-theme="dark"]{
+    --bg: #0b1220;
+    --card: #0f1724;
+    --muted:#9aa4b2;
+    --glass: rgba(255,255,255,0.03);
+    --text:#e6eef7;
+    --surface: #071023;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background: radial-gradient(1200px 400px at 10% 10%, rgba(99,102,241,0.06), transparent),
+                radial-gradient(900px 300px at 90% 90%, rgba(6,182,212,0.04), transparent),
+                var(--bg);
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    padding:20px;
+  }
+
+  /* Material symbol helper */
+  .mat { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0; font-family: 'Material Symbols Outlined'; font-size:20px; vertical-align:middle; }
+
+  /* Layout */
+  .app{
+    max-width:1300px;
+    margin:12px auto;
+    display:grid;
+    grid-template-columns: 260px 1fr;
+    gap:20px;
+    align-items:start;
+  }
+  .card{
+    background:var(--card);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:18px;
+  }
+  /* Sidebar */
+  .sidebar{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    position:relative;
+    min-height:600px;
+  }
+  .brand{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    padding-bottom:6px;
+    border-bottom:1px solid rgba(0,0,0,0.04);
+  }
+  .logo{
+    width:44px;height:44px;border-radius:10px;
+    background:linear-gradient(135deg,#7c3aed,#06b6d4);
+    display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:18px;
+    box-shadow:0 6px 18px rgba(124,58,237,0.16);
+  }
+  nav{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+  .nav-link{
+    display:flex;gap:12px;align-items:center;padding:10px;border-radius:10px;color:var(--muted);text-decoration:none;
+    cursor:pointer;
+  }
+  .nav-link.active{background:linear-gradient(90deg, rgba(99,102,241,0.12), rgba(6,182,212,0.06)); color:var(--text)}
+  .nav-link:hover{color:var(--text); background: rgba(0,0,0,0.02)}
+  .nav-link .mat{font-size:20px}
+
+  /* Topbar & content header */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    margin-bottom:14px;
+  }
+  .search{
+    flex:1;display:flex;gap:8px;align-items:center;background:var(--surface);padding:8px;border-radius:10px;
+  }
+  .top-actions{display:flex;align-items:center;gap:10px}
+  .avatar{
+    width:40px;height:40px;border-radius:999px;background:linear-gradient(90deg,#f97316,#f43f5e);
+    display:flex;align-items:center;justify-content:center;color:white;font-weight:700;
+  }
+  .kpis{display:grid;gap:12px;margin-bottom:12px}
+  .grid-cols-2{grid-template-columns:repeat(2,1fr)}
+  .grid-cols-3{grid-template-columns:repeat(3,1fr)}
+  .grid-cols-4{grid-template-columns:repeat(4,1fr)}
+  .kpi{display:flex;flex-direction:column;gap:6px;padding:14px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.6), transparent)}
+  .kpi h3{margin:0;font-size:14px;color:var(--muted)}
+  .kpi .value{font-size:20px;font-weight:700}
+
+  /* Tables */
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:10px;text-align:left;border-bottom:1px solid rgba(0,0,0,0.04);font-size:14px}
+  th{color:var(--muted);font-weight:600}
+  .btn{display:inline-flex;gap:8px;align-items:center;padding:8px 10px;border-radius:8px;background:var(--glass);border:1px solid rgba(0,0,0,0.04);cursor:pointer}
+  .btn.primary{background:var(--accent-1);color:white;border:none;box-shadow:0 8px 20px rgba(99,102,241,0.12)}
+  .btn.ghost{background:transparent;border:1px solid rgba(0,0,0,0.06)}
+  .muted{color:var(--muted)}
+  .pill{padding:6px 10px;border-radius:999px;font-size:13px}
+
+  /* Responsive */
+  @media (max-width: 1000px){
+    .app{grid-template-columns: 1fr; padding:12px}
+    .sidebar{position:fixed;left:-320px;top:20px;z-index:60;width:300px;transition:all .28s; box-shadow:0 20px 60px rgba(2,6,23,0.45)}
+    .sidebar.open{left:20px}
+    .overlay{position:fixed;inset:0;background:rgba(2,6,23,0.4);z-index:55;display:none}
+    .overlay.show{display:block}
+  }
+
+  /* small helpers */
+  .right{margin-left:auto}
+  .row{display:flex;gap:12px;align-items:center}
+  .space{height:12px}
+  .hero{
+    display:flex;gap:18px;align-items:center;justify-content:space-between;padding:20px;border-radius:12px;background:linear-gradient(90deg,#eef2ff, #ecfeff);
+  }
+  .hero .illustration{width:120px;height:80px;border-radius:10px;background:linear-gradient(90deg,#4f46e5,#06b6d4);display:flex;align-items:center;justify-content:center;color:white;font-weight:700}
+  /* Dialog styling */
+  dialog{border:none;border-radius:12px;padding:0;box-shadow:0 20px 60px rgba(2,6,23,0.3)}
+  dialog::backdrop{background:rgba(2,6,23,0.35)}
+  .dialog-content{padding:18px;min-width:320px}
+  input[type="text"], input[type="email"], input[type="password"], select, textarea{
+    width:100%;padding:10px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);background:transparent;margin-top:8px;
+  }
+  label{display:block;font-weight:600;font-size:13px}
+  .form-row{display:flex;gap:12px}
+  .form-row > div{flex:1}
+  .small{font-size:13px;color:var(--muted)}
+  .table-actions{display:flex;gap:6px}
+  .control-inline{display:flex;gap:8px;align-items:center}
+
+  /* small screens for content cards grid */
+  .cards{display:grid;gap:12px}
+  @media (min-width: 1200px){
+    .cards.grid-4{grid-template-columns:repeat(4,1fr)}
+  }
+  @media (min-width: 900px) and (max-width:1199px){
+    .cards.grid-3{grid-template-columns:repeat(3,1fr)}
+  }
+  @media (min-width: 600px) and (max-width:899px){
+    .cards.grid-2{grid-template-columns:repeat(2,1fr)}
+  }
+  @media (max-width:599px){
+    .cards.grid-1{grid-template-columns:repeat(1,1fr)}
+  }
+
+  /* tiny */
+  .muted-btn{background:transparent;border:0;color:var(--muted);cursor:pointer;padding:6px}
+  .toggle{display:inline-flex;align-items:center;gap:8px;padding:6px;border-radius:999px;background:var(--glass)}
+  .empty{padding:40px;text-align:center;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div id="root" class="app" data-theme="light">
+  <!-- Sidebar -->
+  <aside class="card sidebar" id="sidebar" aria-label="Sidebar">
+    <div class="brand">
+      <div class="logo">S</div>
+      <div>
+        <div style="font-weight:700">School Portal</div>
+        <div class="small muted">single-file demo</div>
+      </div>
+      <button class="muted-btn right" id="mobileCloseBtn" title="Close sidebar" style="display:none">
+        <span class="mat">close</span>
+      </button>
+    </div>
+
+    <nav id="navLinks">
+      <a class="nav-link" data-route="#/dashboard"><span class="mat">dashboard</span> Dashboard</a>
+      <a class="nav-link" data-route="#/students"><span class="mat">groups</span> Students</a>
+      <a class="nav-link" data-route="#/classes"><span class="mat">class</span> Classes</a>
+      <a class="nav-link" data-route="#/attendance"><span class="mat">check_circle</span> Attendance</a>
+      <a class="nav-link" data-route="#/announcements"><span class="mat">campaign</span> Announcements</a>
+      <a class="nav-link" data-route="#/profile"><span class="mat">person</span> Profile</a>
+      <a class="nav-link" data-route="#/settings"><span class="mat">settings</span> Settings</a>
+    </nav>
+
+    <div style="margin-top:auto">
+      <div style="display:flex;gap:8px;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid rgba(0,0,0,0.04)">
+        <div style="display:flex;gap:10px;align-items:center">
+          <div class="avatar" id="sidebarAvatar">A</div>
+          <div>
+            <div id="sidebarName" style="font-weight:700">Guest</div>
+            <div class="small muted" id="sidebarRole">Not signed in</div>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <button class="btn ghost" id="signOutBtn">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main>
+    <div class="topbar">
+      <div style="display:flex;gap:12px;align-items:center;">
+        <button class="btn" id="sidebarToggle" title="Toggle sidebar"><span class="mat">menu</span></button>
+        <div class="search card" style="padding:8px 12px">
+          <span class="mat">search</span>
+          <input id="globalSearch" type="text" placeholder="Search students, classes, announcements..." style="border:none;outline:none;background:transparent" />
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <div class="control-inline">
+          <label class="small muted" for="themeToggle">Dark</label>
+          <button class="toggle" id="themeToggle" title="Toggle theme"><span class="mat">brightness_6</span></button>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="text-align:right">
+            <div id="topbarName" style="font-weight:700">Guest</div>
+            <div class="small muted" id="topbarRole">Role</div>
+          </div>
+          <div class="avatar" id="topAvatar">G</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- content area -->
+    <section id="pageContent">
+      <!-- login page (initial) -->
+      <div id="loginPage" class="card" style="max-width:920px;margin:auto">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:center">
+          <div>
+            <h1 style="margin:0 0 6px 0">Welcome back</h1>
+            <p class="small muted">Sign in to manage your school — demo credentials are provided.</p>
+
+            <div style="margin-top:18px">
+              <form id="loginForm" style="display:flex;flex-direction:column;gap:10px">
+                <div>
+                  <label>Email</label>
+                  <input id="loginEmail" type="email" placeholder="you@school.edu" required />
+                </div>
+                <div>
+                  <label>Password</label>
+                  <input id="loginPassword" type="password" placeholder="••••••••" required />
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <a href="#" id="forgotLink" class="small muted">Forgot password?</a>
+                  <div>
+                    <button type="submit" class="btn primary">Sign in</button>
+                  </div>
+                </div>
+              </form>
+
+              <div style="text-align:center;margin:12px 0" class="small muted">or continue with</div>
+
+              <div style="display:flex;gap:10px;align-items:center">
+                <button class="btn" id="googleSignInBtn"><span class="mat">google</span> Sign in with Google</button>
+                <button class="btn ghost" id="openSignupBtn"><span class="mat">person_add</span> Sign up</button>
+              </div>
+
+              <div style="margin-top:12px" class="small muted">
+                Demo: use <strong>admin@school.test</strong> / <strong>pass1234</strong> or create a new account.
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="hero">
+              <div>
+                <h2 style="margin:0 0 6px 0">All-in-one school admin</h2>
+                <div class="small muted">Manage students, classes, attendance, and announcements from a single portal.</div>
+                <div style="margin-top:12px;display:flex;gap:8px">
+                  <div class="pill muted">Fast</div><div class="pill muted">Offline-ready</div><div class="pill muted">No backend</div>
+                </div>
+              </div>
+              <div class="illustration">SVG</div>
+            </div>
+            <div style="margin-top:12px;padding:12px;border-radius:10px;background:linear-gradient(90deg, rgba(6,182,212,0.06), rgba(99,102,241,0.06))">
+              <div style="font-weight:700">Features</div>
+              <ul class="small muted">
+                <li>Local persistence via localStorage</li>
+                <li>CSV import/export</li>
+                <li>Responsive with dark mode</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- portal main (hidden until login) -->
+      <div id="portal" style="display:none">
+        <!-- Dashboard (default view) -->
+        <div id="view-dashboard" class="card" style="margin-bottom:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <h2 style="margin:0">Dashboard</h2>
+              <div class="small muted">Overview & quick stats</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button class="btn ghost" id="refreshDataBtn" title="Refresh data"><span class="mat">refresh</span></button>
+              <button class="btn" id="addAnnouncementBtn"><span class="mat">post_add</span> New</button>
+            </div>
+          </div>
+
+          <div class="space"></div>
+
+          <div class="kpis cards grid-4" id="kpiGrid">
+            <!-- KPIs inserted by JS -->
+          </div>
+
+          <div class="space"></div>
+
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div class="card" style="flex:1;min-width:260px">
+              <div style="display:flex;justify-content:space-between">
+                <div><strong>Attendance Trend</strong><div class="small muted">Last 14 days</div></div>
+                <div class="small muted">Auto</div>
+              </div>
+              <canvas id="attendanceChart" width="600" height="200" style="margin-top:12px;display:block;width:100%"></canvas>
+            </div>
+
+            <div class="card" style="width:360px">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <div><strong>Announcements</strong><div class="small muted">Recent</div></div>
+                <button class="btn ghost" id="viewAllAnnouncements">View all</button>
+              </div>
+              <div id="announcementsPreview" style="margin-top:12px"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Students view -->
+        <div id="view-students" class="card" style="display:none;margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <h2 style="margin:0">Students</h2>
+              <div class="small muted">Manage student list</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <input id="studentsSearch" placeholder="Search students..." />
+              <button class="btn" id="addStudentBtn"><span class="mat">person_add</span> Add</button>
+              <button class="btn ghost" id="importStudentsBtn"><span class="mat">file_upload</span> Import CSV</button>
+              <button class="btn ghost" id="exportStudentsBtn"><span class="mat">file_download</span> Export CSV</button>
+            </div>
+          </div>
+
+          <div class="space"></div>
+
+          <div style="overflow:auto">
+            <table id="studentsTable">
+              <thead>
+                <tr><th>Name</th><th>Email</th><th>Class</th><th>Status</th><th>Actions</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Classes view -->
+        <div id="view-classes" class="card" style="display:none;margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <h2 style="margin:0">Classes</h2>
+              <div class="small muted">Manage classes</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <input id="classesSearch" placeholder="Search classes..." />
+              <button class="btn" id="addClassBtn"><span class="mat">add</span> Add</button>
+            </div>
+          </div>
+
+          <div class="space"></div>
+
+          <div style="overflow:auto">
+            <table id="classesTable">
+              <thead><tr><th>Class Name</th><th>Teacher</th><th>Room</th><th>Actions</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Attendance view -->
+        <div id="view-attendance" class="card" style="display:none;margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <h2 style="margin:0">Attendance</h2>
+              <div class="small muted">Record & manage attendance</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <input id="attendanceFilter" type="date" />
+              <button class="btn" id="recordAttendanceBtn"><span class="mat">edit_calendar</span> Record</button>
+            </div>
+          </div>
+
+          <div class="space"></div>
+
+          <div style="overflow:auto">
+            <table id="attendanceTable">
+              <thead><tr><th>Date</th><th>Student</th><th>Class</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Announcements view -->
+        <div id="view-announcements" class="card" style="display:none;margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <h2 style="margin:0">Announcements</h2>
+              <div class="small muted">News & posts for the school</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <input id="annSearch" placeholder="Search announcements..." />
+              <button class="btn" id="addAnnouncementBtn2"><span class="mat">post_add</span> New</button>
+            </div>
+          </div>
+
+          <div class="space"></div>
+
+          <div style="overflow:auto">
+            <table id="annTable">
+              <thead><tr><th>Title</th><th>Content</th><th>Author</th><th>Date</th><th>Actions</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Profile -->
+        <div id="view-profile" class="card" style="display:none;margin-bottom:12px">
+          <div style="display:flex;gap:18px;align-items:center">
+            <div class="avatar" id="profileAvatar" style="width:72px;height:72px;font-size:28px">G</div>
+            <div>
+              <h3 id="profileName" style="margin:0">Guest</h3>
+              <div class="small muted" id="profileEmail">guest@example.com</div>
+              <div class="small muted">Provider: <span id="profileProvider">local</span> <button class="btn ghost" id="unlinkProviderBtn">Unlink</button></div>
+            </div>
+            <div style="margin-left:auto">
+              <button class="btn" id="editProfileBtn">Edit</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Settings -->
+        <div id="view-settings" class="card" style="display:none;margin-bottom:12px">
+          <h2 style="margin:0 0 8px 0">Settings</h2>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div style="min-width:240px" class="card">
+              <h4 style="margin:0">Layout</h4>
+              <div style="margin-top:8px" class="small muted">Customize portal UI</div>
+              <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+                <label><input id="compactToggle" type="checkbox" /> Compact table mode</label>
+              </div>
+              <div style="margin-top:10px">
+                <label><input id="sidebarAutoToggle" type="checkbox" checked /> Auto-collapse sidebar on mobile</label>
+              </div>
+            </div>
+            <div style="min-width:240px" class="card">
+              <h4 style="margin:0">Account</h4>
+              <div style="margin-top:8px" class="small muted">Manage session</div>
+              <div style="margin-top:10px;display:flex;gap:8px;">
+                <button class="btn ghost" id="clearDataBtn">Clear demo data</button>
+                <button class="btn" id="resetDemoBtn">Reset demo</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Dialogs -->
+<dialog id="signupDialog">
+  <div class="dialog-content">
+    <h3>Sign up</h3>
+    <form id="signupForm">
+      <div><label>Name<input id="su_name" type="text" required></label></div>
+      <div><label>Email<input id="su_email" type="email" required></label></div>
+      <div><label>Role
+        <select id="su_role">
+          <option>Teacher</option>
+          <option selected>Admin</option>
+          <option>Student</option>
+        </select>
+      </label></div>
+      <div><label>Password<input id="su_password" type="password" required></label></div>
+      <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
+        <button type="button" id="signupCancel" class="btn ghost">Cancel</button>
+        <button type="submit" class="btn primary">Create account</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
+<dialog id="studentDialog">
+  <div class="dialog-content">
+    <h3 id="studentDialogTitle">Add Student</h3>
+    <form id="studentForm">
+      <div><label>Full name<input id="s_name" type="text" required></label></div>
+      <div><label>Email<input id="s_email" type="email" required></label></div>
+      <div><label>Class<select id="s_class"></select></label></div>
+      <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
+        <button type="button" id="studentCancel" class="btn ghost">Cancel</button>
+        <button type="submit" class="btn primary">Save</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
+<dialog id="classDialog">
+  <div class="dialog-content">
+    <h3 id="classDialogTitle">Add Class</h3>
+    <form id="classForm">
+      <div><label>Class name<input id="c_name" type="text" required></label></div>
+      <div><label>Teacher<input id="c_teacher" type="text"></label></div>
+      <div><label>Room<input id="c_room" type="text"></label></div>
+      <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
+        <button type="button" id="classCancel" class="btn ghost">Cancel</button>
+        <button type="submit" class="btn primary">Save</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
+<dialog id="attendanceDialog">
+  <div class="dialog-content">
+    <h3>Record Attendance</h3>
+    <form id="attendanceForm">
+      <div><label>Date<input id="a_date" type="date" required></label></div>
+      <div><label>Class<select id="a_class"></select></label></div>
+      <div style="margin-top:8px"><label>Student<select id="a_student"></select></label></div>
+      <div style="margin-top:8px"><label>Status
+        <select id="a_status">
+          <option value="present">Present</option>
+          <option value="absent">Absent</option>
+          <option value="late">Late</option>
+        </select>
+      </label></div>
+      <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
+        <button type="button" id="attendanceCancel" class="btn ghost">Cancel</button>
+        <button type="submit" class="btn primary">Record</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
+<dialog id="announcementDialog">
+  <div class="dialog-content">
+    <h3 id="announcementTitle">New Announcement</h3>
+    <form id="announcementForm">
+      <div><label>Title<input id="an_title" type="text" required></label></div>
+      <div><label>Content<textarea id="an_content" rows="4"></textarea></label></div>
+      <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
+        <button type="button" id="announcementCancel" class="btn ghost">Cancel</button>
+        <button type="submit" class="btn primary">Publish</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
+<!-- Hidden file input for CSV import -->
+<input type="file" id="csvFileInput" accept=".csv" style="display:none" />
+
+<script>
+/*
+  Single-file School Management Portal
+  - localStorage keys:
+    - sm_users (array of user objects)
+    - sm_students
+    - sm_classes
+    - sm_attendance
+    - sm_announcements
+    - sm_session (current user)
+*/
+
+const storage = {
+  get(key, fallback){
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch(e){ return fallback;}
+  },
+  set(key, val){ localStorage.setItem(key, JSON.stringify(val)); },
+  del(key){ localStorage.removeItem(key); }
+};
+
+// default demo data seed (only applied when missing)
+function seedDemoData(){
+  if(!storage.get('sm_seeded', false)){
+    const users = [
+      {id:'u_admin', name:'Admin User', email:'admin@school.test', role:'Admin', provider:'local', password:'pass1234'},
+      {id:'u_teacher', name:'Ms. Ada', email:'ada@school.test', role:'Teacher', provider:'local', password:'teach123'}
+    ];
+    const classes = [
+      {id:'c1', name:'Grade 10 - A', teacher:'Ms. Ada', room:'101'},
+      {id:'c2', name:'Grade 11 - B', teacher:'Mr. Obi', room:'102'},
+      {id:'c3', name:'Grade 12 - C', teacher:'Ms. Femi', room:'103'},
+    ];
+    const students = [
+      {id:'s1', name:'Amina Yusuf', email:'amina@y.test', classId:'c1', status:'active'},
+      {id:'s2', name:'Chinedu Okafor', email:'chinedu@y.test', classId:'c2', status:'active'},
+      {id:'s3', name:'Fatima Bello', email:'fatima@y.test', classId:'c1', status:'inactive'},
+    ];
+    const announcements = [
+      {id:'an1', title:'Welcome Back!', content:'School reopens Monday at 8am', author:'Admin User', date: new Date().toISOString()},
+      {id:'an2', title:'Sports Day', content:'Reminder: Sports Day next Friday', author:'Ms. Ada', date: new Date().toISOString()}
+    ];
+    // last 10 days attendance random demo
+    const attendance = [];
+    const today = new Date();
+    for(let d=0; d<10; d++){
+      const day = new Date(today.getFullYear(), today.getMonth(), today.getDate()-d);
+      students.forEach(s=>{
+        attendance.push({
+          id: 'att_'+d+'_'+s.id,
+          date: day.toISOString().slice(0,10),
+          studentId: s.id,
+          classId: s.classId,
+          status: Math.random()>0.85 ? 'absent' : 'present'
+        });
+      });
+    }
+
+    storage.set('sm_users', users);
+    storage.set('sm_classes', classes);
+    storage.set('sm_students', students);
+    storage.set('sm_announcements', announcements);
+    storage.set('sm_attendance', attendance);
+    storage.set('sm_seeded', true);
+    console.info('Demo data seeded');
+  }
+}
+
+// utils
+function uid(prefix='id'){ return prefix + '_' + Math.random().toString(36).slice(2,9); }
+function el(sel){ return document.querySelector(sel); }
+function els(sel){ return Array.from(document.querySelectorAll(sel)); }
+function formatDate(iso){ if(!iso) return ''; return new Date(iso).toLocaleDateString(); }
+function show(el){ el.style.display = ''; }
+function hide(el){ el.style.display = 'none'; }
+
+// app state
+const App = {
+  state: {
+    users: storage.get('sm_users', []),
+    students: storage.get('sm_students', []),
+    classes: storage.get('sm_classes', []),
+    announcements: storage.get('sm_announcements', []),
+    attendance: storage.get('sm_attendance', []),
+    session: storage.get('sm_session', null),
+    compactTables: false,
+    autoCollapseSidebar: true
+  },
+  save(){ 
+    storage.set('sm_students', this.state.students);
+    storage.set('sm_classes', this.state.classes);
+    storage.set('sm_announcements', this.state.announcements);
+    storage.set('sm_attendance', this.state.attendance);
+    storage.set('sm_users', this.state.users);
+    storage.set('sm_session', this.state.session);
+  },
+  refreshFromStorage(){
+    this.state.users = storage.get('sm_users', []);
+    this.state.students = storage.get('sm_students', []);
+    this.state.classes = storage.get('sm_classes', []);
+    this.state.announcements = storage.get('sm_announcements', []);
+    this.state.attendance = storage.get('sm_attendance', []);
+    this.state.session = storage.get('sm_session', null);
+  }
+};
+
+// Initial seed
+seedDemoData();
+App.refreshFromStorage();
+
+// ---------- UI wiring & behaviors ----------
+const sidebar = el('#sidebar');
+const overlay = (() => {
+  const o = document.createElement('div');
+  o.className = 'overlay';
+  document.body.appendChild(o);
+  return o;
+})();
+
+function openSidebarMobile(){
+  sidebar.classList.add('open');
+  overlay.classList.add('show');
+  el('#mobileCloseBtn').style.display = 'inline-block';
+}
+function closeSidebarMobile(){
+  sidebar.classList.remove('open');
+  overlay.classList.remove('show');
+  el('#mobileCloseBtn').style.display = 'none';
+}
+
+el('#sidebarToggle').addEventListener('click', ()=>{
+  if(window.innerWidth <= 1000){
+    openSidebarMobile();
+  } else {
+    // collapse/expand for larger screens - simple toggle class
+    sidebar.classList.toggle('collapsed');
+  }
+});
+el('#mobileCloseBtn').addEventListener('click', closeSidebarMobile);
+overlay.addEventListener('click', closeSidebarMobile);
+
+// Theme toggle
+const root = el('#root');
+const themeToggle = el('#themeToggle');
+function setTheme(dark){
+  root.setAttribute('data-theme', dark ? 'dark' : 'light');
+  localStorage.setItem('sm_theme_dark', JSON.stringify(Boolean(dark)));
+}
+themeToggle.addEventListener('click', ()=>{
+  const cur = root.getAttribute('data-theme') === 'dark';
+  setTheme(!cur);
+});
+const savedTheme = JSON.parse(localStorage.getItem('sm_theme_dark') || 'false');
+setTheme(savedTheme);
+
+// Navigation (hash-based router)
+function setActiveNav(route){
+  els('#navLinks .nav-link').forEach(a=>{
+    if(a.dataset.route === route) a.classList.add('active'); else a.classList.remove('active');
+  });
+}
+function showView(hash){
+  // expected hashes: #/dashboard, #/students, #/classes, #/attendance, #/announcements, #/profile, #/settings
+  const views = ['dashboard','students','classes','attendance','announcements','profile','settings'];
+  views.forEach(v=>{
+    const elv = el('#view-'+v);
+    if(!elv) return;
+    if(hash === '#/'+v || (hash==='' && v==='dashboard')) show(elv); else hide(elv);
+  });
+  setActiveNav(hash || '#/dashboard');
+}
+function handleHash(){
+  const h = location.hash || '#/dashboard';
+  // protect: if not logged in, route to login
+  if(!App.state.session){
+    // only allow login page routes
+    show(el('#loginPage'));
+    hide(el('#portal'));
+    // highlight nothing
+    els('.nav-link').forEach(n=>n.classList.remove('active'));
+    return;
+  }
+  hide(el('#loginPage'));
+  show(el('#portal'));
+  showView(h.replace('#','') ? '#'+h.split('#')[1] : '#/dashboard'); // normalize
+  const route = h.split('#')[1] || '/dashboard';
+  setActiveNav('#'+route);
+  el('#globalSearch').value = '';
+  // update UI data
+  renderAll();
+}
+window.addEventListener('hashchange', handleHash);
+
+// nav clicks
+els('#navLinks .nav-link').forEach(a=>{
+  a.addEventListener('click', (e)=>{
+    const r = a.dataset.route || '#/dashboard';
+    location.hash = r;
+    if(window.innerWidth <= 1000 && App.state.autoCollapseSidebar) closeSidebarMobile();
+  });
+});
+
+// Login logic
+const loginForm = el('#loginForm');
+loginForm.addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const email = el('#loginEmail').value.trim();
+  const pwd = el('#loginPassword').value;
+  const u = App.state.users.find(x=>x.email.toLowerCase()===email.toLowerCase() && x.password===pwd);
+  if(u){
+    App.state.session = {id:u.id, name:u.name, email:u.email, role:u.role, provider:u.provider};
+    App.save();
+    toast('Signed in as '+u.name);
+    handleHash();
+    updateProfileUI();
+  } else {
+    alert('Invalid credentials. Try admin@school.test / pass1234');
+  }
+});
+
+// Google sign-in (mock)
+el('#googleSignInBtn').addEventListener('click', ()=>{
+  // placeholder: ask for OAuth client id? We just simulate sign-in
+  const clientId = prompt('OAuth Client ID (placeholder) — enter anything or leave blank');
+  // Simulate Google account
+  const mockAccount = {id: uid('u'), name:'Google User', email:'google.user@school.test', role:'Admin', provider:'google'};
+  // ensure user stored
+  const existing = App.state.users.find(u=>u.email===mockAccount.email);
+  if(!existing){
+    App.state.users.push({...mockAccount, password:''});
+  }
+  App.state.session = {id: mockAccount.id, name: mockAccount.name, email: mockAccount.email, role: mockAccount.role, provider:'google'};
+  App.save();
+  toast('Signed in with Google (mock)');
+  handleHash();
+  updateProfileUI();
+});
+
+// Sign up dialog
+const signupDialog = el('#signupDialog');
+el('#openSignupBtn').addEventListener('click', ()=>signupDialog.showModal());
+el('#signupCancel').addEventListener('click', ()=>signupDialog.close());
+el('#signupForm').addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const name = el('#su_name').value.trim();
+  const email = el('#su_email').value.trim();
+  const role = el('#su_role').value;
+  const pwd = el('#su_password').value;
+  if(App.state.users.some(u=>u.email.toLowerCase()===email.toLowerCase())){ alert('Email already exists'); return; }
+  const user = {id: uid('u'), name, email, role, provider:'local', password:pwd};
+  App.state.users.push(user);
+  App.save();
+  signupDialog.close();
+  toast('Account created — signed in');
+  App.state.session = {id:user.id, name:user.name, email:user.email, role:user.role, provider:'local'};
+  App.save();
+  handleHash();
+  updateProfileUI();
+});
+
+// Sign out
+el('#signOutBtn').addEventListener('click', ()=>{
+  App.state.session = null;
+  App.save();
+  toast('Signed out');
+  handleHash();
+  updateProfileUI();
+});
+
+// populate sidebar/profile UI
+function updateProfileUI(){
+  const session = App.state.session;
+  if(!session){
+    el('#sidebarAvatar').textContent = 'G';
+    el('#sidebarName').textContent = 'Guest';
+    el('#sidebarRole').textContent = 'Not signed in';
+    el('#topbarName').textContent = 'Guest';
+    el('#topbarRole').textContent = 'Not signed in';
+    el('#topAvatar').textContent = 'G';
+    el('#profileName').textContent = 'Guest';
+    el('#profileEmail').textContent = 'guest@example.com';
+    el('#profileProvider').textContent = 'none';
+    return;
+  }
+  el('#sidebarAvatar').textContent = (session.name||'U').slice(0,1).toUpperCase();
+  el('#sidebarName').textContent = session.name;
+  el('#sidebarRole').textContent = session.role;
+  el('#topbarName').textContent = session.name;
+  el('#topbarRole').textContent = session.role;
+  el('#topAvatar').textContent = session.name.slice(0,1).toUpperCase();
+  el('#profileName').textContent = session.name;
+  el('#profileEmail').textContent = session.email;
+  el('#profileProvider').textContent = session.provider || 'local';
+}
+updateProfileUI();
+
+// small toast helper
+function toast(msg, timeout=1800){
+  const t = document.createElement('div');
+  t.className = 'card';
+  t.style.position='fixed';
+  t.style.right='20px';
+  t.style.bottom='20px';
+  t.style.padding='12px';
+  t.style.zIndex=9999;
+  t.style.borderRadius='10px';
+  t.style.boxShadow='0 10px 30px rgba(2,6,23,.25)';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.style.opacity='0.0', timeout-300);
+  setTimeout(()=>t.remove(), timeout);
+}
+
+// --------- CRUD & render functions ----------
+
+// render KPIs
+function renderKPIs(){
+  const students = App.state.students || [];
+  const activeStudents = students.filter(s=>s.status==='active').length;
+  const classesCount = App.state.classes.length;
+  const today = new Date().toISOString().slice(0,10);
+  const attendanceToday = App.state.attendance.filter(a=>a.date === today).length;
+  const announcements = App.state.announcements.length;
+  const kpis = [
+    {label:'Total students', value: students.length, icon:'groups'},
+    {label:'Active students', value: activeStudents, icon:'check_circle'},
+    {label:'Classes', value: classesCount, icon:'class'},
+    {label:'Attendance today', value: attendanceToday, icon:'today'},
+    {label:'Announcements', value: announcements, icon:'campaign'},
+  ];
+
+  const container = el('#kpiGrid');
+  container.innerHTML = '';
+  kpis.forEach(k=>{
+    const div = document.createElement('div');
+    div.className = 'kpi card';
+    div.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;gap:10px;align-items:center">
+        <div class="mat">${k.icon}</div>
+        <div><h3 style="margin:0">${k.label}</h3><div class="small muted">Overview</div></div>
+      </div>
+      <div class="value">${k.value}</div>
+    </div>`;
+    container.appendChild(div);
+  });
+}
+
+// attendance chart (canvas)
+function drawAttendanceChart(){
+  const canvas = el('#attendanceChart');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  // responsive canvas sizing
+  canvas.width = canvas.clientWidth * devicePixelRatio;
+  canvas.height = 200 * devicePixelRatio;
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+
+  // compute last 14 days
+  const days = 14;
+  const labels = [];
+  const data = [];
+  const today = new Date();
+  for(let i=days-1;i>=0;i--){
+    const d = new Date(today.getFullYear(), today.getMonth(), today.getDate()-i);
+    const iso = d.toISOString().slice(0,10);
+    labels.push(d.toLocaleDateString(undefined, {month:'short', day:'numeric'}));
+    const cnt = App.state.attendance.filter(a=>a.date===iso && a.status==='present').length;
+    data.push(cnt);
+  }
+  // draw simple grid & line
+  const w = canvas.clientWidth;
+  const h = 180;
+  ctx.clearRect(0,0,w,h);
+  // background gradient
+  const g = ctx.createLinearGradient(0,0,0,h);
+  g.addColorStop(0, 'rgba(99,102,241,0.12)');
+  g.addColorStop(1, 'rgba(6,182,212,0.02)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,w,h);
+
+  // compute max
+  const max = Math.max(...data, 1);
+  // axes lines
+  ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+  ctx.lineWidth = 1;
+  for(let i=0;i<=4;i++){
+    const y = i*(h/4);
+    ctx.beginPath();
+    ctx.moveTo(0,y); ctx.lineTo(w,y);
+    ctx.stroke();
+  }
+  // draw line
+  ctx.strokeStyle = '#4f46e5';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  data.forEach((v,i)=>{
+    const x = 12 + i*( (w-24)/(data.length-1) );
+    const y = h - (v/max)*(h-20) - 10;
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+
+  // draw points
+  ctx.fillStyle = '#06b6d4';
+  data.forEach((v,i)=>{
+    const x = 12 + i*( (w-24)/(data.length-1) );
+    const y = h - (v/max)*(h-20) - 10;
+    ctx.beginPath(); ctx.arc(x,y,3,0,2*Math.PI); ctx.fill();
+  });
+
+  // labels (sparse)
+  ctx.fillStyle = 'rgba(2,6,23,0.6)';
+  ctx.font = '12px Inter, Arial';
+  for(let i=0;i<labels.length;i+=Math.ceil(labels.length/6)){
+    const x = 12 + i*( (w-24)/(labels.length-1) );
+    ctx.fillText(labels[i], x-12, h+14);
+  }
+}
+
+// Students table rendering & CRUD
+function renderStudentsTable(filter=''){
+  const tbody = el('#studentsTable tbody');
+  tbody.innerHTML = '';
+  const students = App.state.students;
+  const classesMap = Object.fromEntries(App.state.classes.map(c=>[c.id,c]));
+  const q = filter.trim().toLowerCase();
+  students.filter(s=>{
+    if(!q) return true;
+    return s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q) || (classesMap[s.classId] && classesMap[s.classId].name.toLowerCase().includes(q));
+  }).forEach(s=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${s.name}</td><td>${s.email}</td><td>${classesMap[s.classId]?classesMap[s.classId].name:'-'}</td>
+      <td><span class="pill">${s.status}</span></td>
+      <td>
+        <div class="table-actions">
+          <button class="btn ghost edit-student" data-id="${s.id}"><span class="mat">edit</span></button>
+          <button class="btn ghost delete-student" data-id="${s.id}"><span class="mat">delete</span></button>
+        </div>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+  // wire edit/delete
+  els('.edit-student').forEach(b=>b.addEventListener('click', ()=>openStudentDialog(b.dataset.id)));
+  els('.delete-student').forEach(b=>b.addEventListener('click', (e)=>{ 
+    const id = e.currentTarget.dataset.id;
+    if(confirm('Delete this student?')) {
+      App.state.students = App.state.students.filter(s=>s.id!==id);
+      App.save(); renderStudentsTable(el('#studentsSearch').value);
+      toast('Student deleted');
+    }
+  }));
+}
+el('#studentsSearch').addEventListener('input', ()=>renderStudentsTable(el('#studentsSearch').value));
+el('#globalSearch').addEventListener('input', (e)=>{
+  const q = e.target.value.trim();
+  // quick search: if contains '@' open students else search classes/announcements
+  if(q.length===0) return;
+  // basic behavior: filter students table if open, else set to students view
+  if(location.hash === '#/students' || !location.hash){
+    renderStudentsTable(q);
+  } else {
+    location.hash = '#/students';
+    renderStudentsTable(q);
+  }
+});
+
+// Student dialog
+const studentDialog = el('#studentDialog');
+const studentForm = el('#studentForm');
+let editingStudentId = null;
+function openStudentDialog(id=null){
+  editingStudentId = id;
+  const classSelect = el('#s_class');
+  classSelect.innerHTML = '';
+  App.state.classes.forEach(c=>{
+    const opt = document.createElement('option'); opt.value = c.id; opt.textContent = c.name; classSelect.appendChild(opt);
+  });
+  if(id){
+    el('#studentDialogTitle').textContent = 'Edit Student';
+    const s = App.state.students.find(x=>x.id===id);
+    el('#s_name').value = s.name;
+    el('#s_email').value = s.email;
+    el('#s_class').value = s.classId;
+  } else {
+    el('#studentDialogTitle').textContent = 'Add Student';
+    el('#s_name').value = '';
+    el('#s_email').value = '';
+    el('#s_class').value = App.state.classes[0] ? App.state.classes[0].id : '';
+  }
+  studentDialog.showModal();
+}
+el('#addStudentBtn').addEventListener('click', ()=>openStudentDialog());
+el('#studentCancel').addEventListener('click', ()=>studentDialog.close());
+studentForm.addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const name = el('#s_name').value.trim();
+  const email = el('#s_email').value.trim();
+  const classId = el('#s_class').value;
+  if(editingStudentId){
+    const s = App.state.students.find(x=>x.id===editingStudentId);
+    s.name = name; s.email = email; s.classId = classId;
+    toast('Student updated');
+  } else {
+    App.state.students.push({id:uid('s'), name, email, classId, status:'active'});
+    toast('Student added');
+  }
+  App.save();
+  studentDialog.close();
+  renderStudentsTable(el('#studentsSearch').value);
+});
+
+// CSV export/import for students
+el('#exportStudentsBtn').addEventListener('click', ()=>{
+  const rows = [['id','name','email','classId','status']];
+  App.state.students.forEach(s=>rows.push([s.id, s.name, s.email, s.classId, s.status]));
+  const csv = rows.map(r=>r.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'students.csv'; a.click();
+  URL.revokeObjectURL(url);
+  toast('Exported students.csv');
+});
+el('#importStudentsBtn').addEventListener('click', ()=> el('#csvFileInput').click());
+el('#csvFileInput').addEventListener('change', (e)=>{
+  const f = e.target.files[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = function(){ 
+    const text = reader.result;
+    const rows = parseCSV(text);
+    // expect header row
+    const header = rows[0].map(h=>h.trim().toLowerCase());
+    const idx = {};
+    header.forEach((h,i)=>idx[h]=i);
+    for(let r=1;r<rows.length;r++){
+      const row = rows[r];
+      if(!row[ idx['name'] ]) continue;
+      const s = {
+        id: row[idx['id']] || uid('s'),
+        name: row[idx['name']],
+        email: row[idx['email']] || '',
+        classId: row[idx['classid']] || '',
+        status: row[idx['status']] || 'active'
+      };
+      // replace or add
+      const existing = App.state.students.find(x=>x.id===s.id || x.email.toLowerCase()===s.email.toLowerCase());
+      if(existing){
+        Object.assign(existing, s);
+      } else App.state.students.push(s);
+    }
+    App.save(); renderStudentsTable(); toast('Imported students');
+  };
+  reader.readAsText(f);
+});
+
+// simple CSV parser (handles quoted fields)
+function parseCSV(text){
+  const rows = [];
+  let cur = '';
+  let row = [];
+  let inQuotes=false;
+  for(let i=0;i<text.length;i++){
+    const ch = text[i];
+    if(inQuotes){
+      if(ch === '"'){
+        if(text[i+1] === '"'){ cur += '"'; i++; } else { inQuotes = false; }
+      } else cur += ch;
+    } else {
+      if(ch === '"'){ inQuotes = true; }
+      else if(ch === ','){ row.push(cur); cur=''; }
+      else if(ch === '\r'){ continue; }
+      else if(ch === '\n'){ row.push(cur); rows.push(row); row=[]; cur=''; }
+      else cur += ch;
+    }
+  }
+  if(cur !== '' || row.length) { row.push(cur); rows.push(row); }
+  return rows;
+}
+
+// Classes CRUD
+function renderClassesTable(filter=''){
+  const tbody = el('#classesTable tbody'); tbody.innerHTML = '';
+  const q = filter.trim().toLowerCase();
+  App.state.classes.filter(c=>{
+    if(!q) return true;
+    return c.name.toLowerCase().includes(q) || c.teacher.toLowerCase().includes(q) || c.room.toLowerCase().includes(q);
+  }).forEach(c=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${c.name}</td><td>${c.teacher}</td><td>${c.room}</td>
+      <td>
+        <div class="table-actions">
+          <button class="btn ghost edit-class" data-id="${c.id}"><span class="mat">edit</span></button>
+          <button class="btn ghost delete-class" data-id="${c.id}"><span class="mat">delete</span></button>
+        </div>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+  els('.edit-class').forEach(b=>b.addEventListener('click', ()=>openClassDialog(b.dataset.id)));
+  els('.delete-class').forEach(b=>b.addEventListener('click', (e)=>{
+    const id=e.currentTarget.dataset.id;
+    if(confirm('Delete this class?')) {
+      App.state.classes = App.state.classes.filter(x=>x.id!==id);
+      // remove class references from students
+      App.state.students.forEach(s=>{ if(s.classId===id) s.classId=''; });
+      App.save(); renderClassesTable(el('#classesSearch').value); renderStudentsTable();
+      toast('Class deleted');
+    }
+  }));
+}
+el('#classesSearch').addEventListener('input', ()=>renderClassesTable(el('#classesSearch').value));
+el('#addClassBtn').addEventListener('click', ()=>openClassDialog());
+const classDialog = el('#classDialog');
+const classForm = el('#classForm');
+let editingClassId = null;
+function openClassDialog(id=null){
+  editingClassId = id;
+  if(id){
+    const c = App.state.classes.find(x=>x.id===id);
+    el('#classDialogTitle').textContent = 'Edit Class';
+    el('#c_name').value = c.name;
+    el('#c_teacher').value = c.teacher;
+    el('#c_room').value = c.room;
+  } else {
+    el('#classDialogTitle').textContent = 'Add Class';
+    el('#c_name').value = '';
+    el('#c_teacher').value = '';
+    el('#c_room').value = '';
+  }
+  classDialog.showModal();
+}
+el('#classCancel').addEventListener('click', ()=>classDialog.close());
+classForm.addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const name = el('#c_name').value.trim();
+  const teacher = el('#c_teacher').value.trim();
+  const room = el('#c_room').value.trim();
+  if(editingClassId){
+    const c = App.state.classes.find(x=>x.id===editingClassId);
+    c.name=name;c.teacher=teacher;c.room=room;
+    toast('Class updated');
+  } else {
+    App.state.classes.push({id:uid('c'), name, teacher, room});
+    toast('Class added');
+  }
+  App.save();
+  classDialog.close();
+  renderClassesTable();
+  renderStudentsTable();
+});
+
+// Attendance CRUD & record
+function renderAttendanceTable(filterDate=''){
+  const tbody = el('#attendanceTable tbody');
+  tbody.innerHTML = '';
+  const q = filterDate;
+  App.state.attendance.filter(a => {
+    if(!q) return true;
+    return a.date === q;
+  }).forEach(a=>{
+    const student = App.state.students.find(s=>s.id===a.studentId);
+    const c = App.state.classes.find(x=>x.id===a.classId);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${a.date}</td><td>${student?student.name:'-'}</td><td>${c?c.name:'-'}</td><td><span class="pill">${a.status}</span></td>
+      <td><button class="btn ghost del-att" data-id="${a.id}"><span class="mat">delete</span></button></td>`;
+    tbody.appendChild(tr);
+  });
+  els('.del-att').forEach(b=>b.addEventListener('click', (e)=>{
+    const id = e.currentTarget.dataset.id;
+    if(confirm('Delete this attendance record?')){
+      App.state.attendance = App.state.attendance.filter(x=>x.id!==id);
+      App.save(); renderAttendanceTable(el('#attendanceFilter').value);
+      toast('Attendance removed');
+    }
+  }));
+}
+el('#attendanceFilter').addEventListener('change', ()=>renderAttendanceTable(el('#attendanceFilter').value));
+el('#recordAttendanceBtn').addEventListener('click', ()=>openAttendanceDialog());
+const attendanceDialog = el('#attendanceDialog');
+const attendanceForm = el('#attendanceForm');
+el('#attendanceCancel').addEventListener('click', ()=>attendanceDialog.close());
+function openAttendanceDialog(){
+  // populate class and student selects
+  const csel = el('#a_class'); csel.innerHTML = '';
+  App.state.classes.forEach(c=> { const o=document.createElement('option'); o.value=c.id; o.textContent=c.name; csel.appendChild(o); });
+  const ssel = el('#a_student'); ssel.innerHTML = '';
+  App.state.students.forEach(s=>{ const o=document.createElement('option'); o.value=s.id; o.textContent=s.name; ssel.appendChild(o); });
+  el('#a_date').value = new Date().toISOString().slice(0,10);
+  attendanceDialog.showModal();
+}
+attendanceForm.addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const date = el('#a_date').value;
+  const classId = el('#a_class').value;
+  const studentId = el('#a_student').value;
+  const status = el('#a_status').value;
+  App.state.attendance.push({id:uid('att'), date, classId, studentId, status});
+  App.save();
+  attendanceDialog.close();
+  renderAttendanceTable(el('#attendanceFilter').value);
+  toast('Attendance recorded');
+});
+
+// Announcements CRUD
+function renderAnnouncementsTable(filter=''){
+  const tbody = el('#annTable tbody'); tbody.innerHTML = '';
+  const q = filter.trim().toLowerCase();
+  App.state.announcements.filter(a=>{
+    if(!q) return true;
+    return a.title.toLowerCase().includes(q) || a.content.toLowerCase().includes(q);
+  }).forEach(a=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${a.title}</td><td>${a.content.slice(0,80)}</td><td>${a.author}</td><td>${formatDate(a.date)}</td>
+      <td>
+        <div class="table-actions">
+          <button class="btn ghost edit-ann" data-id="${a.id}"><span class="mat">edit</span></button>
+          <button class="btn ghost del-ann" data-id="${a.id}"><span class="mat">delete</span></button>
+        </div>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+  els('.edit-ann').forEach(b=>b.addEventListener('click', ()=>openAnnouncementDialog(b.dataset.id)));
+  els('.del-ann').forEach(b=>b.addEventListener('click', (e)=>{
+    const id = e.currentTarget.dataset.id;
+    if(confirm('Delete announcement?')){
+      App.state.announcements = App.state.announcements.filter(x=>x.id!==id);
+      App.save(); renderAnnouncementsTable();
+      toast('Deleted');
+    }
+  }));
+  // preview on dashboard
+  const preview = el('#announcementsPreview'); preview.innerHTML = '';
+  App.state.announcements.slice(-3).reverse().forEach(a=>{
+    const div = document.createElement('div'); div.style.marginBottom='8px';
+    div.innerHTML = `<div style="font-weight:700">${a.title}</div><div class="small muted">${formatDate(a.date)} — ${a.author}</div>`;
+    preview.appendChild(div);
+  });
+}
+el('#annSearch').addEventListener('input', ()=>renderAnnouncementsTable(el('#annSearch').value));
+el('#addAnnouncementBtn').addEventListener('click', ()=>openAnnouncementDialog());
+el('#addAnnouncementBtn2').addEventListener('click', ()=>openAnnouncementDialog());
+const announcementDialog = el('#announcementDialog');
+const announcementForm = el('#announcementForm');
+let editingAnnouncementId = null;
+function openAnnouncementDialog(id=null){
+  editingAnnouncementId = id;
+  if(id){
+    const an = App.state.announcements.find(x=>x.id===id);
+    el('#announcementTitle').textContent = 'Edit Announcement';
+    el('#an_title').value = an.title;
+    el('#an_content').value = an.content;
+  } else {
+    el('#announcementTitle').textContent = 'New Announcement';
+    el('#an_title').value = '';
+    el('#an_content').value = '';
+  }
+  announcementDialog.showModal();
+}
+el('#announcementCancel').addEventListener('click', ()=>announcementDialog.close());
+announcementForm.addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const title = el('#an_title').value.trim();
+  const content = el('#an_content').value.trim();
+  const author = App.state.session ? App.state.session.name : 'System';
+  if(editingAnnouncementId){
+    const an = App.state.announcements.find(x=>x.id===editingAnnouncementId);
+    an.title = title; an.content = content; an.date = new Date().toISOString();
+    toast('Announcement updated');
+  } else {
+    App.state.announcements.push({id:uid('an'), title, content, author, date: new Date().toISOString()});
+    toast('Announcement published');
+  }
+  App.save();
+  announcementDialog.close();
+  renderAnnouncementsTable();
+});
+
+// Profile edit & unlink (mock)
+el('#editProfileBtn').addEventListener('click', ()=>{
+  const name = prompt('New display name', App.state.session?.name || '');
+  if(name){
+    const u = App.state.users.find(x=>x.id===App.state.session.id);
+    if(u) u.name = name;
+    App.state.session.name = name;
+    App.save();
+    updateProfileUI();
+    toast('Profile updated');
+  }
+});
+el('#unlinkProviderBtn').addEventListener('click', ()=>{
+  if(!App.state.session) return;
+  if(confirm('Mock unlink external provider?')){
+    const u = App.state.users.find(x=>x.id===App.state.session.id);
+    if(u) u.provider = 'local';
+    App.state.session.provider = 'local';
+    App.save(); updateProfileUI(); toast('Provider unlinked (mock)');
+  }
+});
+
+// Settings controls
+el('#compactToggle').addEventListener('change', (e)=>{
+  App.state.compactTables = e.target.checked;
+  document.querySelectorAll('table').forEach(t => t.style.fontSize = App.state.compactTables ? '13px' : '');
+});
+el('#sidebarAutoToggle').addEventListener('change', (e)=>{ App.state.autoCollapseSidebar = e.target.checked; });
+
+// clear/reset
+el('#clearDataBtn').addEventListener('click', ()=>{
+  if(confirm('Clear demo data and users? This will sign you out.')) {
+    ['sm_students','sm_classes','sm_attendance','sm_announcements','sm_users','sm_session','sm_seeded'].forEach(k=>localStorage.removeItem(k));
+    location.reload();
+  }
+});
+el('#resetDemoBtn').addEventListener('click', ()=>{
+  if(confirm('Reset demo data to defaults?')) {
+    ['sm_students','sm_classes','sm_attendance','sm_announcements','sm_users','sm_seeded','sm_session'].forEach(k=>localStorage.removeItem(k));
+    seedDemoData();
+    location.reload();
+  }
+});
+
+// refresh data
+el('#refreshDataBtn').addEventListener('click', ()=>{ App.refreshFromStorage(); renderAll(); toast('Refreshed'); });
+
+// render everything
+function renderAll(){
+  renderKPIs();
+  drawAttendanceChart();
+  renderAnnouncementsTable();
+  renderStudentsTable();
+  renderClassesTable();
+  renderAttendanceTable(el('#attendanceFilter').value);
+  updateProfileUI();
+}
+
+// initial render
+renderAll();
+handleHash(); // ensure view reflects login/session
+
+// wire nav active class on load
+els('#navLinks .nav-link').forEach(a=>{
+  a.addEventListener('click', ()=> {
+    els('#navLinks .nav-link').forEach(x=>x.classList.remove('active'));
+    a.classList.add('active');
+  });
+});
+
+// small UI helpers: view all announcements
+el('#viewAllAnnouncements').addEventListener('click', ()=> location.hash = '#/announcements');
+
+// mobile layout handling
+window.addEventListener('resize', ()=>{
+  if(window.innerWidth > 1000) { closeSidebarMobile(); }
+});
+
+// quick demo sign-in from query if provided
+(function tryAutoSignInFromQuery(){
+  const params = new URLSearchParams(location.search);
+  const demo = params.get('demo');
+  if(demo === 'admin' && !App.state.session){
+    const admin = App.state.users.find(u=>u.email==='admin@school.test');
+    if(admin){ App.state.session = {id:admin.id,name:admin.name,email:admin.email,role:admin.role,provider:admin.provider}; App.save(); updateProfileUI(); handleHash(); }
+  }
+})();
+
+// prevent dialogs from reloading page on Esc weirdness - default behavior is fine
+
+// expose a tiny inspector on console
+window.__SM = {
+  App,
+  reload: ()=>location.reload(),
+  seedDemoData,
+  storage
+};
+</script>
+</body>
+</html>
